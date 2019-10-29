@@ -1,0 +1,15 @@
+1) first part was to modify code to simulate double pendulum
+2) build up numerical ODE solver
+3) test ODE solver with ball simulation
+4) modify ODE solver to work in single step increments
+5) modify double pendulum simulation to work in single step increments
+
+
+in order to create a gif from the images invoke:
+
+convert -delay <delay_in_hundredths_of_sec> -loop 0 *.png animation.gif
+
+in our case, framerate is 10, so do:
+
+convert -delay 10 -loop 0 *.png animation.gif
+

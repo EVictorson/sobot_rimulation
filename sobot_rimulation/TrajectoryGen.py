@@ -1,11 +1,42 @@
-# Trajectory generation given q0 and qf
+#!/usr/bin/env python
+""" Simple class to generate robot manipulator joint space trajectories.
 
-# take q0, qf, and tf,
+Methods currently employed are cubic polynomial and quintic polynomial.
+The CubicPoly method takes in angular position and angular velocity.
+The QuinticPoly method takes in angular position, velocity and acceleration.
+
+  Typical usage example:
+
+    q0 = [0.52, 0.52]
+    q0dot = [0,0]
+    qf = [2.09, -2.62]
+    qfdot = [1, 1]
+    traj_rate = 20
+    tf = 3
+
+    TGen = CubicPoly(q0,q0dot,qf,qfdot,tf,traj_rate)
+    TGen.run()
+"""
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class TrajectoryGen:
+    """ Trajectory generation parent class
+
+    Attributes:
+        q0: state position initial conditions
+        q0dot: state velocity initial conditions
+        qf: state position final conditions
+        qfdot: state velocity final conditions
+        tf: final time
+        rate: rate at which generator runs
+        A: list of polynomial coefficients
+        q: list of states at each sampling period
+    """
+
     def __init__(self, q0, q0dot, qf, qfdot, tf, rate):
+        """ Init with above attributes. """
         self.q0 = q0
         self.qf = qf
         self.tf = tf
@@ -16,15 +47,20 @@ class TrajectoryGen:
         self.q = []
 
     def return_trajectory(self):
+        """ Return generated trajectory. """
         return self.q
 
+    def run(self):
+        """ Run everything. """
+        self.calc_coeffs()
+        self.calc_trajectory()
 
 
 class CubicPoly(TrajectoryGen):
-
+    """ Trajectory generation child class to perform cubic polynomial generation."""
     def calc_coeffs(self):
-        # for each joint calculate the coefficients for the cubic polynomial
-        for i in range(len(q0)):
+        """ Solve for cubic polynomial coefficients for each joint."""
+        for i in range(len(self.q0)):
             q0 = self.q0[i]
             q0dot = self.q0dot[i]
             qf = self.qf[i]
@@ -43,21 +79,38 @@ class CubicPoly(TrajectoryGen):
 
 
     def calc_trajectory(self):
-        num_points = tf * rate
+        """ Generate trajectory given polynomial coefficients and sampling rate."""
+        num_points = self.tf * self.rate
         A = self.A
 
         # for each joint calculate list of positions
         for joint in range(len(self.q0)):
             q = []
             for i in range(num_points):
-                t = i / rate
-                q.append(A[joint,3] * t**3 + A[joint,2] * t**2 + A[joint,1]*t + A[joint,0])
+                t = (float(i) / self.rate)
+                q.append(A[joint][3] * t**3 + A[joint][2] * t**2 + A[joint][1]*t + A[joint][0])
 
             # appen list of joint position i to q
             self.q.append(q)
 
 
+
+
 class QuinticPoly(TrajectoryGen):
+    """ Trajectory generation child class to perform cubic polynomial generation.
+
+    Attributes:
+        q0: state position initial conditions
+        q0dot: state velocity initial conditions
+        q0ddot: state acceleration initial conditions
+        qf: state position final conditions
+        qfdot: state velocity final conditions
+        qfddot: state acceleration final conditions
+        tf: final time
+        rate: rate at which generator runs
+        A: list of polynomial coefficients
+        q: list of states at each sampling period
+        """
     def __init__(self, q0, q0dot, q0ddot, qf, qfdot, qfddot, tf, rate):
         self.q0 = q0
         self.qf = qf
@@ -72,7 +125,8 @@ class QuinticPoly(TrajectoryGen):
 
 
     def calc_coeffs(self):
-        for i in range(len(q0)):
+        """ Solve for quintic polynomial coefficients for each joint."""
+        for i in range(len(self.q0)):
             q0 = self.q0[i]
             q0dot = self.q0dot[i]
             q0ddot = self.q0ddot[i]
@@ -98,15 +152,46 @@ class QuinticPoly(TrajectoryGen):
             self.A.append(xout)
 
     def calc_trajectory(self):
-        num_points = tf * rate
+        """ Generate trajectory given polynomial coefficients and sampling rate."""
+        num_points = self.tf * self.rate
         A = self.A
 
         # for each joint calculate list of positions
         for joint in range(len(self.q0)):
             q = []
             for i in range(num_points):
-                t = i / rate
+                t = float(i) / self.rate
                 q.append(A[joint,5] * t**5 + A[joint,4] * t**4 + A [joint,3] * t**3 + A[joint,2] * t**2 + A[joint,1] * t + A[joint,0])
 
             # appen list of joint position i to q
             self.q.append(q)
+
+
+# if main do test
+if __name__ == '__main__':
+    # trajectory parameters
+    q0 = [0.52, 0.52]
+    q0dot = [0,0]
+    qf = [2.09, -2.62]
+    qfdot = [1, 1]
+    traj_rate = 20
+    tf = 3
+
+    TGen = CubicPoly(q0,q0dot,qf,qfdot,tf,traj_rate)
+    TGen.run()
+    traj = TGen.q
+
+    t = np.linspace(0, tf, traj_rate*tf)
+    theta1 = traj[0]
+    theta2 = traj[1]
+
+    print(len(t))
+    print(len(theta1))
+
+    plt.plot(t, theta1, 'b', label='Theta1')
+    plt.plot(t, theta2, 'r', label='Theta2')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Joint Angle (rad)')
+    plt.legend()
+    plt.grid()
+    plt.show()

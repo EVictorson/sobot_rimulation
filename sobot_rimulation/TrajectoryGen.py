@@ -192,6 +192,7 @@ if __name__ == '__main__':
     plt.plot(t, theta2, 'r', label='Theta2')
     plt.xlabel('Time (s)')
     plt.ylabel('Joint Angle (rad)')
+    plt.title('Robot Manipulator Joint Angles vs Time')
     plt.legend()
     plt.grid()
     plt.show()

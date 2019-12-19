@@ -1,3 +1,4 @@
+
 # ODE solver and system updates
 
 import numpy as np
@@ -5,36 +6,41 @@ from scipy.integrate import odeint
 
 class RobotDynamics:
 
-  def __init__(self):
-    # parameters of the dynamic model
-    self.L1 = 0.5    # (m)
-    self.L2 = 0.5    # (m)
-    self.a1 = 1      # (m)
-    self.a2 = 1      # (m)
-    self.ML1 = 50    # (kg)
-    self.ML2 = 50    # (kg)
-    self.IL1 = 10    # (kg m^2)
-    self.IL2 = 10    # (kg m^2)
-    self.kr1 = 100   # (unitless gear reduction ratio)
-    self.kr2 = 100   # (unitless gear reduction ratio)
-    self.Mm1 = 5     # (kg)
-    self.Mm2 = 5     # (kg)
-    self.Im1 = 0.01  # (kg m^2)
-    self.Im2 = 0.01  # (kg m^2)
-    self.Fm1 = 0.01  # (N m s / rad)
-    self.Fm2 = 0.01  # (N m s / rad)
-    self.Ra1 = 10    # (ohm)
-    self.Ra2 = 10    # (ohm)
-    self.kt1 = 2     # (N m / A)
-    self.kt2 = 2     # (N m / A)
-    self.kv1 = 2     # (V s / rad)
-    self.kv2 = 2     # (V s / rad)
-    self.g = 9.807   # (m/s/s)
-    self.current_ts = 0     # current time step
-    self.state = [[0.52, 0, 0.52, 0]]    # initialize state list of lists with ICS
-    self.U0 = [[0.52, 0, 0.52, 0]]
-    self.Kp = [[25, 0],[0, 25]]
-    self.Kd = [[5, 0][0, 5]]
+    def __init__(self):
+        # parameters of the dynamic model
+        self.L1 = 0.5    # (m)
+        self.L2 = 0.5    # (m)
+        self.a1 = 1      # (m)
+        self.a2 = 1      # (m)
+        self.ML1 = 50    # (kg)
+        self.ML2 = 50    # (kg)
+        self.IL1 = 10    # (kg m^2)
+        self.IL2 = 10    # (kg m^2)
+        self.kr1 = 100   # (unitless gear reduction ratio)
+        self.kr2 = 100   # (unitless gear reduction ratio)
+        self.Mm1 = 5     # (kg)
+        self.Mm2 = 5     # (kg)
+        self.Im1 = 0.01  # (kg m^2)
+        self.Im2 = 0.01  # (kg m^2)
+        self.Fm1 = 0.01  # (N m s / rad)
+        self.Fm2 = 0.01  # (N m s / rad)
+        self.Ra1 = 10    # (ohm)
+        self.Ra2 = 10    # (ohm)
+        self.kt1 = 2     # (N m / A)
+        self.kt2 = 2     # (N m / A)
+        self.kv1 = 2     # (V s / rad)
+        self.kv2 = 2     # (V s / rad)
+        self.g = 9.807   # (m/s/s)
+        self.current_ts = 0     # current time step
+        #self.state = [[0.52, 0, 0.52, 0]]    # initialize state list of lists with ICS
+        #self.U0 = [[0.52, 0, 0.52, 0]]
+        self.state = np.array([0.52, 0, 0.52, 0])    # initialize state list of lists with ICS
+        self.U0 = np.array([0.52, 0, 0.52, 0])
+        self.q = []
+        self.qdot = []
+        self.qddot = []
+        #self.Kp = [[25, 0],[0, 25]]
+        #self.Kd = [[5, 0][0, 5]]
 
 
     # return inertia matrix
@@ -64,10 +70,10 @@ class RobotDynamics:
         g = self.g
 
         b11 = (IL1 + ML1 * L1**2 + kr1**2 * Im1
-              + IL2 + ML2*(a1**2 + L2**2 + 2*a1*L2*np.cos(self.state[self.current_ts,2]))
-              + IM2 + Mm2*a1**2)
+              + IL2 + ML2*(a1**2 + L2**2 + 2*a1*L2*np.cos(self.state[self.current_ts][2]))
+              + Im2 + Mm2*a1**2)
 
-        b12 = (IL2 + Ml2*(L2**2 + a1*L2*np.cos(self.state[self.current_ts,2])) +
+        b12 = (IL2 + ML2*(L2**2 + a1*L2*np.cos(self.state[self.current_ts][2])) +
                 kr2 * Im2)
 
         b21 = b12
@@ -95,17 +101,20 @@ class RobotDynamics:
         Im1 = self.Im1
         Im2 = self.Im2
 
+        h = -1*ML2*a1*L2*np.sin(self.state[self.current_ts][2])
 
-        h = -1*Ml2*a11*L2*np.sin(self.state[self.current_ts,2])
-
-        c11 = h*self.state[self.current_ts, 3]
-        c12 = h*(self.state[self.current_ts,1] + self.state[self.current_ts,3])
-        c21 = -1 * h * self.state[self.current_ts,1]
+        c11 = h*self.state[self.current_ts][3]
+        c12 = h*(self.state[self.current_ts][1] + self.state[self.current_ts][3])
+        c21 = -1 * h * self.state[self.current_ts][1]
         c22 = 0
 
         C = np.array([[c11, c12],[c21, c22]])
 
         return C
+
+
+    #def get_F(self):
+        # not implemented
 
     #return gravity vector
     def get_G(self):
@@ -125,20 +134,20 @@ class RobotDynamics:
         Im2 = self.Im2
         g = self.g
 
-        g1 = ((ML1 * L1 + Mm2*a1 + ML2*a1)*g*np.cos(self.state[self.current_ts,0]) +
-            ML2 * L2 * g * np.cos(self.state[self.current_ts,0]+self.state[self.current_ts,2]))
+        g1 = ((ML1 * L1 + Mm2*a1 + ML2*a1)*g*np.cos(self.state[self.current_ts][0]) +
+            ML2 * L2 * g * np.cos(self.state[self.current_ts][0]+self.state[self.current_ts][2]))
 
-        g2 = ML2 * L2 * g * np.cos(self.state[self.current_ts,0]+self.state[self.current_ts,2])
+        g2 = ML2 * L2 * g * np.cos(self.state[self.current_ts][0]+self.state[self.current_ts][2])
 
         G = np.array([[g1],[g2]])
 
         return G
 
-
+"""
     #TODO: Inject control input here
     def f(self, u, t):
         theta1, z1, theta2, z2 = u
-        self.state.append[theta1, z1, theta2, z2]
+        #self.state.append[theta1, z1, theta2, z2]
 
         B = self.get_B()
         C = self.get_C()
@@ -146,6 +155,9 @@ class RobotDynamics:
         T = self.get_control()
 
 
+
+        return [theta1dot, z1dot, theta2dot, z2dot]
+"""
 
 
 

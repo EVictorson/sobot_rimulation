@@ -60,6 +60,9 @@ class TrajectoryGen:
         self.calc_coeffs()
         self.calc_trajectory()
 
+    def get_traj_length(self):
+        return len(self.q)
+
 
 class CubicPoly(TrajectoryGen):
     """ Trajectory generation child class to perform cubic polynomial generation."""
@@ -99,7 +102,7 @@ class CubicPoly(TrajectoryGen):
                 qdot.append(3*A[joint][3] * t**2 + 2*A[joint][2] * t + A[joint][1])
                 qddot.append(6*A[joint][3] * t + 2*A[joint][2])
 
-            # appen list of joint position i to q
+            # append list of joint position i to q
             self.q.append(q)
             self.qdot.append(qdot)
             self.qddot.append(qddot)

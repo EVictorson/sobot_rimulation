@@ -26,7 +26,7 @@ class ODESolver(object):
         # that first calls f(u,t) and then ensures that the
         # result is an array of floats.
         self.f = lambda u, t: np.asarray(f(u, t), float)
-        #self.f = lambda u, t: f(u,t)
+        #self.f = lambda u, t: f(u, t)
         self.state = []
         self.time = [0]
         self.dt = dt

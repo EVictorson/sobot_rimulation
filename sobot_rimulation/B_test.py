@@ -66,6 +66,8 @@ print(B)
 b22 = Il2 + ml2*l2**2 + kr2**2*Im2
 b12 = Il2 + ml2*(l2**2 + a1*l2*sp.cos(theta2)) + kr2*Im2
 
+
+# TODO add method to symbolically calculate the christoffel symbols
 c122 = sp.diff(b12, theta2) - 0.5*sp.diff(b22,theta1)
 print('c122 = ', c122)
 
